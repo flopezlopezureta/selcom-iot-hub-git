@@ -1,0 +1,5 @@
+{
+  "name": "SELCOM IoT Hub V1.0.0",
+  "description": "Una herramienta técnica para generar código y esquemas de comunicación para el módulo LilyGO T-SIM7080-S3, integrando sensores IoT y envío de datos via NB-IoT/Cat-M.",
+  "requestFramePermissions": []
+}
