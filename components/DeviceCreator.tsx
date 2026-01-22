@@ -23,7 +23,8 @@ const DeviceCreator: React.FC<DeviceCreatorProps> = ({ onSuccess, onCancel, comp
     protocol: ProtocolType.HTTP_POST,
     networkMode: NetworkMode.NB_IOT,
     endpoint: 'https://iot.selcom.cl/api/v1',
-    interval: 30
+    interval: 30,
+    model_variant: 'Standard'
   });
 
   const [loadingStep, setLoadingStep] = useState(0);
@@ -128,7 +129,8 @@ const DeviceCreator: React.FC<DeviceCreatorProps> = ({ onSuccess, onCancel, comp
         networkMode: formData.networkMode,
         endpoint: formData.endpoint,
         interval: formData.interval
-      }
+      },
+      model_variant: formData.model_variant
     };
 
     if (editDevice) {
@@ -207,6 +209,27 @@ const DeviceCreator: React.FC<DeviceCreatorProps> = ({ onSuccess, onCancel, comp
                 <select value={formData.hardware} onChange={e => setFormData({ ...formData, hardware: e.target.value as HardwareType })} className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white text-xs font-bold">
                   {Object.values(HardwareType).map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
+
+                {/* SELECTOR DE MODELO ESPECÍFICO (Solo visible para ESP32 genéricos) */}
+                {(formData.hardware === HardwareType.ESP32_S3 || formData.hardware === HardwareType.ESP32_C6) && (
+                  <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                    <label className="block text-[10px] font-black text-cyan-400 mb-2 uppercase">Variante del Modelo</label>
+                    <select
+                      value={formData.model_variant || 'Standard'}
+                      onChange={e => setFormData({ ...formData, model_variant: e.target.value })}
+                      className="w-full bg-slate-950 border border-cyan-500/30 rounded-xl px-4 py-2 text-cyan-400 text-xs font-bold"
+                    >
+                      <option value="Standard">Standard (Genérico)</option>
+                      <option value="WROOM-1">WROOM-1</option>
+                      <option value="WROOM-32">WROOM-32</option>
+                      <option value="WROVER">WROVER (PSRAM)</option>
+                      <option value="MINI-1">MINI-1</option>
+                      <option value="C3-MINI">C3-MINI</option>
+                      <option value="S3-DevKitC">S3-DevKitC</option>
+                    </select>
+                  </div>
+                )}
+
                 <p className="text-[9px] text-slate-600 mt-2 font-bold uppercase italic">La elección de HW limita los protocolos disponibles.</p>
               </div>
 

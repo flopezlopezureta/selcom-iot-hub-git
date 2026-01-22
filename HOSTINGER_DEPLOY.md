@@ -1,6 +1,6 @@
 # 🚀 Guía de Despliegue: Hostinger + GitHub
 
-Tu código ya está en GitHub: **https://github.com/flopezlopezureta/selcom-iot-hub-git**
+Tu código ya está en GitHub: **https://github.com/flopezlopezureta/NewGravRegentryHostinger**
 
 ## Paso 1: Conectar Hostinger con GitHub
 
@@ -12,7 +12,7 @@ Tu código ya está en GitHub: **https://github.com/flopezlopezureta/selcom-iot-
 4. En el menú lateral, busca **"Git"** o **"GitHub"**
 5. Haz clic en **"Connect to GitHub"** o **"Conectar con GitHub"**
 6. **Autoriza** a Hostinger en la ventana de GitHub que se abre
-7. Selecciona el repositorio: **`flopezlopezureta/selcom-iot-hub-git`**
+7. Selecciona el repositorio: **`flopezlopezureta/NewGravRegentryHostinger`**
 8. Configura:
    - **Branch (Rama)**: `main`
    - **Deploy Path (Ruta)**: `/public_html` (o la carpeta de tu dominio)

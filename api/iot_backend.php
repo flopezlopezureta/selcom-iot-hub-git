@@ -71,10 +71,22 @@ try {
             echo json_encode($devices);
             break;
 
+        case 'get_measurements':
+            $device_id = $_GET['device_id'] ?? '';
+            $limit = $_GET['limit'] ?? 100;
+
+            $stmt = $db->prepare("SELECT value, timestamp FROM measurements WHERE device_id = ? ORDER BY timestamp DESC LIMIT ?");
+            $stmt->execute([$device_id, $limit]);
+            $measurements = $stmt->fetchAll();
+
+            // Revertir para que el gráfico vaya de antiguo a nuevo
+            echo json_encode(array_reverse($measurements));
+            break;
+
         case 'add_device':
             $data = getRequestData();
             $id = uniqid('dev_');
-            $stmt = $db->prepare("INSERT INTO devices (id, name, mac_address, type, unit, last_value, company_id, hardware_config) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO devices (id, name, mac_address, type, unit, last_value, company_id, hardware_config, model_variant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $data['name'],
@@ -83,7 +95,8 @@ try {
                 $data['unit'],
                 $data['value'] ?? 0,
                 $data['company_id'],
-                json_encode($data['hardwareConfig'])
+                json_encode($data['hardwareConfig']),
+                $data['model_variant'] ?? 'ESP32-WROOM'
             ]);
             echo json_encode(['success' => true, 'id' => $id]);
             break;
@@ -91,7 +104,7 @@ try {
         case 'update_device':
             $data = getRequestData();
             $id = $_GET['id'] ?? '';
-            $stmt = $db->prepare("UPDATE devices SET name=?, mac_address=?, type=?, unit=?, company_id=?, hardware_config=? WHERE id=?");
+            $stmt = $db->prepare("UPDATE devices SET name=?, mac_address=?, type=?, unit=?, company_id=?, hardware_config=?, model_variant=? WHERE id=?");
             $stmt->execute([
                 $data['name'],
                 $data['mac_address'],
@@ -99,6 +112,7 @@ try {
                 $data['unit'],
                 $data['company_id'],
                 json_encode($data['hardwareConfig']),
+                $data['model_variant'] ?? 'ESP32-WROOM',
                 $id
             ]);
             echo json_encode(['success' => true]);

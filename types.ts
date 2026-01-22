@@ -83,6 +83,7 @@ export interface Device {
     endpoint: string;
     interval: number; // segundos
   };
+  model_variant?: string;
 }
 
 export interface Measurement {

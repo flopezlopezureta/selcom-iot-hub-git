@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS devices (
     mac_address VARCHAR(100) UNIQUE NOT NULL,
     type VARCHAR(100),
     unit VARCHAR(20),
+    model_variant VARCHAR(50) DEFAULT 'ESP32-WROOM',
     status ENUM('online', 'offline', 'maintenance') DEFAULT 'offline',
     last_value DECIMAL(15, 4) DEFAULT 0,
     company_id VARCHAR(50),
@@ -49,12 +50,7 @@ CREATE TABLE IF NOT EXISTS measurements (
 ) ENGINE=InnoDB;
 
 -- Initial Data
-INSERT INTO companies (id, name, tax_id, service_status) VALUES ('SEL-001', 'Agrícola del Valle', '76.123.456-K', 'active');
-
 -- Note: Password is 'admindemo' hashed with PASSWORD_DEFAULT (bcrypt)
 -- Hash for 'admindemo': $2y$10$6xps20ZJ944wYpUD4jqntOZZVg0GVXu4/5jzwuMgKW5azOkcBhQQm
 INSERT INTO users (id, username, password_hash, full_name, role, active) 
-VALUES ('1', 'admin', '$2y$10$38DAh7VYHmEO4RDwQLXma.exhTfY0f5eeGzWN6XDZP77OnyLItj0q', 'Administrador Global', 'admin', 1);
-
-INSERT INTO users (id, username, password_hash, full_name, role, company_id, active) 
-VALUES ('2', 'juan.perez', '$2y$10$38DAh7VYHmEO4RDwQLXma.exhTfY0f5eeGzWN6XDZP77OnyLItj0q', 'Juan Pérez', 'client', 'SEL-001', 1);
+VALUES ('1', 'admin', '$2y$10$6xps20ZJ944wYpUD4jqntOZZVg0GVXu4/5jzwuMgKW5azOkcBhQQm', 'Administrador Global', 'admin', 1);

@@ -58,6 +58,16 @@ export const databaseService = {
     return await res.json();
   },
 
+  getMeasurements: async (deviceId: string, limit: number = 100) => {
+    try {
+      const res = await fetch(`${API_BASE}?action=get_measurements&device_id=${deviceId}&limit=${limit}`);
+      return await res.json();
+    } catch (error) {
+      console.error("Error fetching measurements:", error);
+      return [];
+    }
+  },
+
   getUsers: async (companyId?: string): Promise<User[]> => {
     const res = await fetch(`${API_BASE}?action=get_users${companyId ? `&company_id=${companyId}` : ''}`);
     return await res.json();
