@@ -10,6 +10,10 @@ RewriteEngine On
     
     # Servir landing.html para la raíz
     RewriteRule ^$ landing.html [L]
+
+    # Redirigir assets a dist/assets si no existen en la raíz
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
     
     # No redirigir si el archivo o directorio existe
     RewriteCond %{REQUEST_FILENAME} -f [OR]
