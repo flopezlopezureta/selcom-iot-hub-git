@@ -11,18 +11,16 @@ RewriteEngine On
     # Servir landing.html para la raíz
     RewriteRule ^$ landing.html [L]
 
-    # Redirigir assets a dist/assets si no existen en la raíz
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
-    
     # No redirigir si el archivo o directorio existe
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # Redirigir todo lo demás a index.html (React SPA)
+    # Redirigir todo lo demás a index.html
+    # IMPORTANTE: El index.html que se debe usar es el de la carpeta DIST
     RewriteRule ^ index.html [L]
 </IfModule>
+
+
 
 # Control de Caché para asegurar actualizaciones
 <IfModule mod_expires.c>
