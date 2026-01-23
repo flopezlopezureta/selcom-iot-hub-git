@@ -5,7 +5,6 @@
  */
 
 $filesToDelete = [
-    'App.tsx',
     'index.tsx',
     'index.css',
     'types.ts',
@@ -15,8 +14,19 @@ $filesToDelete = [
     'postcss.config.js',
     'vite.config.ts',
     'tsconfig.json',
-    'metadata.json'
+    'metadata.json',
+    '.env',
+    '.env.local',
+    'App.tsx'
 ];
+
+// Comprobar si el index.html es el de desarrollo (contiene index.tsx)
+if (file_exists('index.html')) {
+    $content = file_get_contents('index.html');
+    if (strpos($content, 'index.tsx') !== false) {
+        $filesToDelete[] = 'index.html';
+    }
+}
 
 $foldersToDelete = [
     'components',
