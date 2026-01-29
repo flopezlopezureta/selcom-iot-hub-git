@@ -1,0 +1,10 @@
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.env|^\.git|.*\.(sql|md|json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to specific PHP files if needed, but the main protection is above

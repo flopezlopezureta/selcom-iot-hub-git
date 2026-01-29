@@ -101,114 +101,20 @@ try {
             echo json_encode(['success' => true, 'id' => $id]);
             break;
 
-
-        case 'get_audit_logs':
-            $device_id = $_GET['device_id'] ?? '';
-            $limit = $_GET['limit'] ?? 100;
-            $stmt = $db->prepare("SELECT * FROM audit_logs WHERE device_id = ? ORDER BY created_at DESC LIMIT ?");
-            $stmt->execute([$device_id, $limit]);
-            echo json_encode($stmt->fetchAll());
-            break;
-
         case 'update_device':
             $data = getRequestData();
             $id = $_GET['id'] ?? '';
-
-            // Fetch current state for logging
-            $stmtDoc = $db->prepare("SELECT * FROM devices WHERE id = ?");
-            $stmtDoc->execute([$id]);
-            $current = $stmtDoc->fetch();
-
-            $updateFields = [];
-            $params = [];
-
-            // Standard fields
-            if (isset($data['name'])) {
-                $updateFields[] = "name=?";
-                $params[] = $data['name'];
-            }
-            if (isset($data['mac_address'])) {
-                $updateFields[] = "mac_address=?";
-                $params[] = $data['mac_address'];
-            }
-            if (isset($data['type'])) {
-                $updateFields[] = "type=?";
-                $params[] = $data['type'];
-            }
-            if (isset($data['unit'])) {
-                $updateFields[] = "unit=?";
-                $params[] = $data['unit'];
-            }
-            if (isset($data['company_id'])) {
-                $updateFields[] = "company_id=?";
-                $params[] = $data['company_id'];
-            }
-            if (isset($data['hardwareConfig'])) {
-                $updateFields[] = "hardware_config=?";
-                $params[] = json_encode($data['hardwareConfig']);
-            }
-            if (isset($data['model_variant'])) {
-                $updateFields[] = "model_variant=?";
-                $params[] = $data['model_variant'];
-            }
-
-            // New Dashboard Features
-            if (isset($data['maintenance_mode'])) {
-                $updateFields[] = "maintenance_mode=?";
-                $params[] = $data['maintenance_mode'] ? 1 : 0;
-
-                // Log Maintenance Mode Change
-                if ($current && (bool) $current['maintenance_mode'] !== (bool) $data['maintenance_mode']) {
-                    $logStmt = $db->prepare("INSERT INTO audit_logs (device_id, event_type, description) VALUES (?, ?, ?)");
-                    $logStmt->execute([$id, 'MAINTENANCE', 'Modo Mantenimiento ' . ($data['maintenance_mode'] ? 'ACTIVADO' : 'DESACTIVADO')]);
-                }
-            }
-            if (isset($data['calibration_offset'])) {
-                $updateFields[] = "calibration_offset=?";
-                $params[] = $data['calibration_offset'];
-            }
-            if (isset($data['heartbeat_interval'])) {
-                $updateFields[] = "heartbeat_interval=?";
-                $params[] = $data['heartbeat_interval'];
-            }
-            if (isset($data['notification_settings'])) {
-                $updateFields[] = "notification_settings=?";
-                $params[] = json_encode($data['notification_settings']);
-            }
-            if (isset($data['thresholds'])) {
-                // thresholds are usually stored in hardware_config or separate JSON if schema supports it.
-                // Assuming currently stored in hardware_config or maybe previous implementation relied on client-side or separate column not shown in minimal schema.
-                // Checking previous code: updateDevice was calling with thresholds.
-                // Wait, schema.sql does NOT have 'thresholds' column! It must be part of hardware_config or missing?
-                // Checking types.ts: Device has thresholds?: { min, max }.
-                // Checking iot_backend.php previous: It did NOT handle thresholds explicitly in UPDATE!
-                // Ah, previous code:
-                // $stmt = $db->prepare("UPDATE devices SET name=?, mac_address=?, type=?, unit=?, company_id=?, hardware_config=?, model_variant=? WHERE id=?");
-                // It seems thresholds were NOT persisted in DB or lost?
-                // Let's add thresholds to standard JSON config or new column if needed.
-                // For now, let's assume we put it into hardware_config if passed, or just ignore if not schema ready.
-                // Re-reading previous 'update_device': only updated specific fields.
-                // IMPORTANT: Client sends thresholds separately in existing code?
-                // `databaseService.updateDevice(device.id, { thresholds: { min: val, max: maxThreshold } });`
-                // This means previous backend code IGNORED thresholds! This is a BUG being monitored?
-                // Let's fix this by storing thresholds in `hardware_config` JSON merge, or add a column.
-                // Adding 'thresholds' column is safer for queryability, but JSON is flexible.
-                // Let's assume we should save it. I'll add logic to merge into hardware_config if received, OR better, let's add `thresholds` JSON column to schema updates to be clean.
-            }
-
-            if (!empty($updateFields)) {
-                $params[] = $id;
-                $sql = "UPDATE devices SET " . implode(", ", $updateFields) . " WHERE id=?";
-                $stmt = $db->prepare($sql);
-                $stmt->execute($params);
-            }
-
-            // Log generic config change if not already logged
-            if (!empty($updateFields) && !isset($data['maintenance_mode'])) {
-                $logStmt = $db->prepare("INSERT INTO audit_logs (device_id, event_type, description) VALUES (?, ?, ?)");
-                $logStmt->execute([$id, 'CONFIG_CHANGE', 'Actualización de configuración del dispositivo']);
-            }
-
+            $stmt = $db->prepare("UPDATE devices SET name=?, mac_address=?, type=?, unit=?, company_id=?, hardware_config=?, model_variant=? WHERE id=?");
+            $stmt->execute([
+                $data['name'],
+                $data['mac_address'],
+                $data['type'],
+                $data['unit'],
+                $data['company_id'],
+                json_encode($data['hardwareConfig']),
+                $data['model_variant'] ?? 'ESP32-WROOM',
+                $id
+            ]);
             echo json_encode(['success' => true]);
             break;
 

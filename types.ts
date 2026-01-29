@@ -84,6 +84,27 @@ export interface Device {
     interval: number; // segundos
   };
   model_variant?: string;
+  maintenance_mode?: boolean;
+  calibration_offset?: number;
+  heartbeat_interval?: number; // seconds
+  notification_settings?: NotificationSettings; // JSON
+}
+
+export interface NotificationSettings {
+  email: boolean;
+  whatsapp: boolean;
+  push: boolean;
+  critical_only: boolean;
+}
+
+export interface AuditLog {
+  id: string;
+  device_id: string;
+  event_type: 'CONFIG_CHANGE' | 'ALARM' | 'MAINTENANCE' | 'SYSTEM';
+  description: string;
+  user_id?: string;
+  created_at: string;
+  metadata?: any;
 }
 
 export interface Measurement {

@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from 'recharts';
-import { Device, SensorType } from '../types';
+import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
 import { databaseService } from '../services/databaseService';
 import CodeViewer from './CodeViewer';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from 'recharts';
 
 interface DeviceDetailProps {
   device: Device;
@@ -12,7 +12,7 @@ interface DeviceDetailProps {
   onRefresh: () => void;
 }
 
-type TabType = 'monitoring' | 'history' | 'firmware' | 'troubleshooting';
+type TabType = 'monitoring' | 'history' | 'audit' | 'firmware' | 'troubleshooting';
 
 const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }) => {
   const [activeTab, setActiveTab] = useState<TabType>('monitoring');
@@ -31,6 +31,20 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
   // const [hoverIndex, setHoverIndex] = useState<number | null>(null); // Removed for Recharts
   // const svgRef = useRef<SVGSVGElement>(null); // Removed for Recharts
 
+  // New Dashboard Features State
+  const [maintenanceMode, setMaintenanceMode] = useState<boolean>(device.maintenance_mode || false);
+  const [calibrationOffset, setCalibrationOffset] = useState<number>(device.calibration_offset || 0);
+  const [heartbeatInterval, setHeartbeatInterval] = useState<number>(device.heartbeat_interval || 1800);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(device.notification_settings || {
+    email: true,
+    whatsapp: false,
+    push: true,
+    critical_only: true
+  });
+
   const timeOptions = [
     { label: '5m', value: 5 },
     { label: '15m', value: 15 },
@@ -47,7 +61,12 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
     if (device.hardwareConfig) {
       setIntervalSec(device.hardwareConfig.interval);
     }
-  }, [device.id, device.thresholds, device.hardwareConfig]);
+    // Update local state if device props change significantly
+    setMaintenanceMode(device.maintenance_mode || false);
+    setCalibrationOffset(device.calibration_offset || 0);
+    setHeartbeatInterval(device.heartbeat_interval || 1800);
+    if (device.notification_settings) setNotifSettings(device.notification_settings);
+  }, [device.id, device.thresholds, device.hardwareConfig, device.maintenance_mode, device.calibration_offset, device.heartbeat_interval]);
 
   // Cargar historial real desde la base de datos
   useEffect(() => {
@@ -82,6 +101,22 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
     return () => clearInterval(interval);
   }, [device.id]);
 
+  // Load Audit Logs
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      setLoadingLogs(true);
+      databaseService.getAuditLogs(device.id).then(logs => {
+        setAuditLogs(logs);
+        setLoadingLogs(false);
+      });
+    }
+  }, [device.id, activeTab]);
+
+  const handleUpdateDevice = async (updates: any) => {
+    await databaseService.updateDevice(device.id, updates);
+    onRefresh(); // Refresh parent to get updated device object
+  };
+
   // Sincronizar historial con el valor global que viene de App.tsx
   useEffect(() => {
     const now = new Date();
@@ -113,7 +148,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
   };
   */
 
-  const isOutOfRange = device.value < minThreshold || device.value > maxThreshold;
+  const displayedValue = device.value + calibrationOffset;
+  const isOutOfRange = !maintenanceMode && (displayedValue < minThreshold || displayedValue > maxThreshold);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12 select-none">
@@ -129,8 +165,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
           </div>
         </div>
         <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 overflow-x-auto shadow-inner no-scrollbar">
-          {['monitoring', 'history', 'firmware', 'troubleshooting'].map((t) => (
-            <button key={t} onClick={() => setActiveTab(t as TabType)} className={`px-4 lg:px-6 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t ? 'bg-cyan-500 text-[#0f172a] shadow-lg shadow-cyan-500/20' : 'text-slate-500 hover:text-slate-300'}`}>{t === 'troubleshooting' ? 'Soporte' : t}</button>
+          {['monitoring', 'history', 'audit', 'firmware', 'troubleshooting'].map((t) => (
+            <button key={t} onClick={() => setActiveTab(t as TabType)} className={`px-4 lg:px-6 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t ? 'bg-cyan-500 text-[#0f172a] shadow-lg shadow-cyan-500/20' : 'text-slate-500 hover:text-slate-300'}`}>{t === 'troubleshooting' ? 'Soporte' : t === 'history' ? 'Historial' : t === 'audit' ? 'Eventos' : t === 'monitoring' ? 'Monitor' : t}</button>
           ))}
         </div>
       </div>
@@ -148,8 +184,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
                   <p className="text-slate-400 text-[9px] sm:text-[11px] font-bold uppercase">Mueva las líneas rojas para fijar límites</p>
                 </div>
                 <div className="flex items-baseline gap-1 bg-slate-900 px-4 py-3 sm:px-6 sm:py-4 rounded-2xl border-2 border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.2)] self-end sm:self-auto">
-                  <span className={`text-3xl sm:text-4xl lg:text-5xl font-black tabular-nums ${isOutOfRange ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'text-cyan-400'}`}>
-                    {device.value.toFixed(2)}
+                  <span className={`text-3xl sm:text-4xl lg:text-5xl font-black tabular-nums ${isOutOfRange ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : maintenanceMode ? 'text-amber-400' : 'text-cyan-400'}`}>
+                    {displayedValue.toFixed(2)}
                   </span>
                   <span className="text-white text-[10px] sm:text-sm font-black uppercase ml-1">{device.unit}</span>
                 </div>
@@ -231,6 +267,102 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
                   />
                 </div>
 
+                {/* Maintenance Mode Toggle */}
+                <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-800">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Modo Mantenimiento</span>
+                    <span className="text-[9px] text-slate-500 font-bold uppercase">Suprime alertas locales</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newVal = !maintenanceMode;
+                      setMaintenanceMode(newVal);
+                      handleUpdateDevice({ maintenance_mode: newVal });
+                    }}
+                    className={`w-12 h-6 rounded-full p-1 transition-all ${maintenanceMode ? 'bg-amber-500' : 'bg-slate-700'}`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform ${maintenanceMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+
+                {/* Calibration & Heartbeat */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Calibración (+/-)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={calibrationOffset}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setCalibrationOffset(val);
+                      }}
+                      onBlur={() => handleUpdateDevice({ calibration_offset: calibrationOffset })}
+                      className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-2 text-center font-mono font-bold focus:border-cyan-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Heartbeat (seg)</label>
+                    <input
+                      type="number"
+                      value={heartbeatInterval}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setHeartbeatInterval(val);
+                      }}
+                      onBlur={() => handleUpdateDevice({ heartbeat_interval: heartbeatInterval })}
+                      className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-2 text-center font-mono font-bold focus:border-cyan-500 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Notification Settings */}
+                <div className="space-y-3 pt-4 border-t border-slate-800">
+                  <label className="text-[10px] font-black text-white uppercase tracking-widest block">Notificaciones</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        const n = { ...notifSettings, email: !notifSettings.email };
+                        setNotifSettings(n);
+                        handleUpdateDevice({ notification_settings: n });
+                      }}
+                      className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.email ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                    >
+                      Email
+                    </button>
+                    <button
+                      onClick={() => {
+                        const n = { ...notifSettings, whatsapp: !notifSettings.whatsapp };
+                        setNotifSettings(n);
+                        handleUpdateDevice({ notification_settings: n });
+                      }}
+                      className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.whatsapp ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                    >
+                      WhatsApp
+                    </button>
+                    <button
+                      onClick={() => {
+                        const n = { ...notifSettings, push: !notifSettings.push };
+                        setNotifSettings(n);
+                        handleUpdateDevice({ notification_settings: n });
+                      }}
+                      className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.push ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                    >
+                      Push
+                    </button>
+                    <button
+                      onClick={() => {
+                        const n = { ...notifSettings, critical_only: !notifSettings.critical_only };
+                        setNotifSettings(n);
+                        handleUpdateDevice({ notification_settings: n });
+                      }}
+                      className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.critical_only ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                    >
+                      Solo Críticas
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <label className="text-[10px] sm:text-[11px] font-black text-white uppercase block mb-2 tracking-widest">Umbrales Activos</label>
                   <div className="grid grid-cols-2 gap-4">
@@ -279,9 +411,9 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
             <div className={`bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border-2 p-6 sm:p-8 transition-all ${isOutOfRange ? 'border-rose-500/50 bg-rose-500/5 shadow-[0_0_30px_rgba(244,63,94,0.2)]' : 'border-emerald-500/30 bg-emerald-500/5'}`}>
               <h4 className="text-white text-[10px] sm:text-[11px] font-black uppercase tracking-widest mb-4">Estado Alarma</h4>
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full ${isOutOfRange ? 'bg-rose-500 animate-ping' : 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.6)]'}`}></div>
-                <span className={`text-sm sm:text-lg font-black uppercase ${isOutOfRange ? 'text-rose-400' : 'text-emerald-400'}`}>
-                  {isOutOfRange ? 'FUERA DE RANGO' : 'SISTEMA ÓPTIMO'}
+                <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full ${isOutOfRange ? 'bg-rose-500 animate-ping' : maintenanceMode ? 'bg-amber-500' : 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.6)]'}`}></div>
+                <span className={`text-sm sm:text-lg font-black uppercase ${isOutOfRange ? 'text-rose-400' : maintenanceMode ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {maintenanceMode ? 'MANTENIMIENTO' : isOutOfRange ? 'FUERA DE RANGO' : 'SISTEMA ÓPTIMO'}
                 </span>
               </div>
             </div>
@@ -346,6 +478,51 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, onBack, onRefresh }
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'audit' && (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 overflow-hidden shadow-2xl">
+            <div className="p-6 sm:p-8 border-b border-slate-800">
+              <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest">Auditoría de Eventos</h3>
+              <p className="text-slate-500 text-[9px] sm:text-[10px] uppercase font-bold tracking-widest">Trazabilidad de cambios y alertas</p>
+            </div>
+            <div className="max-h-[500px] overflow-y-auto">
+              {loadingLogs ? (
+                <div className="p-8 text-center text-slate-500 font-mono text-xs animate-pulse">Cargando logs...</div>
+              ) : auditLogs.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 font-mono text-xs">No hay eventos registrados</div>
+              ) : (
+                <table className="w-full text-left">
+                  <thead className="bg-slate-900/50 text-[9px] font-black text-slate-400 uppercase tracking-widest sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3">Fecha</th>
+                      <th className="px-6 py-3">Evento</th>
+                      <th className="px-6 py-3">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {auditLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-800/30">
+                        <td className="px-6 py-3 text-[10px] font-mono text-slate-400 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                        <td className="px-6 py-3">
+                          <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase ${log.event_type === 'ALARM' ? 'bg-rose-500/20 text-rose-400' :
+                              log.event_type === 'MAINTENANCE' ? 'bg-amber-500/20 text-amber-400' :
+                                log.event_type === 'CONFIG_CHANGE' ? 'bg-cyan-500/20 text-cyan-400' :
+                                  'bg-slate-700/50 text-slate-300'
+                            }`}>
+                            {log.event_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-[11px] text-slate-300">{log.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
