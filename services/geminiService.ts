@@ -54,11 +54,26 @@ export const generateIoTCode = async (
       return generateLocally(hardware, sensor, protocol, endpoint, networkMode, topic);
     }
 
-    const json = await response.json();
+    const textData = await response.text();
+    let jsonString = textData;
 
-    // Si la respuesta está vacía o es un error del proxy que devolvió json vacío
+    // Limpiar bloques de código markdown si los hay (```json ... ```)
+    const jsonMatch = textData.match(/```json\n([\s\S]*?)\n```/) || textData.match(/```\n([\s\S]*?)\n```/);
+    if (jsonMatch) {
+      jsonString = jsonMatch[1];
+    }
+
+    let json;
+    try {
+      json = JSON.parse(jsonString);
+    } catch (e) {
+      console.warn("Error parseando JSON de IA:", e, jsonString);
+      throw new Error("Formato JSON inválido de IA");
+    }
+
+    // Si la respuesta está vacía o es un error
     if (!json || !json.code) {
-      throw new Error("Respuesta de IA inválida");
+      throw new Error("Respuesta de IA incompleta");
     }
 
     return json;
