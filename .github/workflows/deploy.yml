@@ -40,5 +40,4 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
-            api/.env
             api/.env.local
