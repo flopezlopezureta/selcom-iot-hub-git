@@ -25,11 +25,6 @@ jobs:
       - name: 🏗️ Build Project
         run: npm run build
 
-      - name: 📂 Copy API folder to dist
-        run: |
-          mkdir -p dist/api
-          cp -r api/* dist/api/
-
       - name: 📂 Sync files to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
