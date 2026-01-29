@@ -1,5 +1,6 @@
 <?php
 header("Access-Control-Allow-Origin: *");
+// Retry deployment trigger V3
 header("Content-Type: application/json; charset=UTF-8");
 
 require_once 'db.php';
