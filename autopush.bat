@@ -20,8 +20,12 @@ echo Realizando commit con mensaje: "%msg%"
 git commit -m "%msg%"
 
 echo.
-echo Subiendo cambios a GitHub...
-git push
+echo Subiendo cambios a Repositorio Desarrollo (GitHub)...
+git push origin main
+
+echo.
+echo Subiendo cambios a Repositorio Produccion (selcom.cl)...
+git push hostinger main
 
 echo.
 echo ¡Listo! Cambios subidos correctamente.
