@@ -62,7 +62,7 @@ export const generateIoTCode = async (
 
     if (!response.ok) {
       console.warn("API de IA falló, usando generador local...");
-      return generateLocally(hardware, sensor, protocol, endpoint, networkMode, topic);
+      return generateLocally(hardware, sensor, protocol, endpoint, networkMode, topic, actuators);
     }
 
     const textData = await response.text();
@@ -91,7 +91,7 @@ export const generateIoTCode = async (
 
   } catch (error) {
     console.error('Error generando código con IA, cambiando a local:', error);
-    return generateLocally(hardware, sensor, protocol, endpoint, networkMode, topic);
+    return generateLocally(hardware, sensor, protocol, endpoint, networkMode, topic, actuators);
   }
 };
 
@@ -101,10 +101,11 @@ const generateLocally = (
   protocol: ProtocolType,
   endpoint: string,
   networkMode: NetworkMode,
-  topic?: string
+  topic?: string,
+  actuators?: any[]
 ) => {
   let code = "";
-  const explanation = "Generado localmente usando plantilla optimizada para " + hardware;
+  const explanation = "Generado localmente usando plantilla optimizada para " + hardware + (actuators && actuators.length > 0 ? " [Con Actuadores]" : "");
 
   // --- PLANTILLAS BÁSICAS ---
 
@@ -152,6 +153,9 @@ WiFiClient client;
 void setup() {
   Serial.begin(115200);
   pinMode(LED_PIN, OUTPUT);
+  
+  // Inicialización de Actuadores
+  ${actuators && actuators.length > 0 ? actuators.map(a => `  pinMode(${a.pin}, OUTPUT); // ${a.name}`).join('\n  ') : '// Sin actuadores'}
 `;
 
   if (hardware === HardwareType.T_SIM7080_S3) {
@@ -202,6 +206,16 @@ void loop() {
   Serial.print("Enviando: ");
   Serial.println(payload);
 
+  // Lógica de Actuadores (Local Fallback)
+  ${actuators && actuators.length > 0 ? actuators.map(a => {
+    if (a.mode === 'auto_high') {
+      return `  if (value > ${a.threshold || 0}) { digitalWrite(${a.pin}, HIGH); } else { digitalWrite(${a.pin}, LOW); }`;
+    } else if (a.mode === 'auto_low') {
+      return `  if (value < ${a.threshold || 0}) { digitalWrite(${a.pin}, HIGH); } else { digitalWrite(${a.pin}, LOW); }`;
+    } else {
+      return `  // El pin ${a.pin} (${a.name}) está en modo MANUAL. Se controla remotamente.`;
+    }
+  }).join('\n  ') : '// Sin lógica de actuadores local'}
 `;
 
   // 3. Envío de Datos (Protocolo)
