@@ -716,3 +716,24 @@ html.js-enabled [data-animate]:not(.visible) {
     opacity: 1 !important;
     transform: translateY(0) !important;
 }
+/* CRITICAL FIX: Force all images to be visible on mobile */
+@media (max-width: 768px) {
+    img {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+    }
+    
+    .hero-slider .slide {
+        opacity: 1 !important;
+    }
+    
+    .hero-slider .slide.active {
+        opacity: 1 !important;
+    }
+    
+    .showroom-image-box img {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+}
