@@ -5,11 +5,16 @@ try {
     $db = getDB();
     echo "Running Schema Fix...\n";
 
-    $cols = ['actuators', 'actuator_states', 'thresholds'];
-    foreach ($cols as $col) {
+    $cols = [
+        'model_variant' => 'VARCHAR(50) DEFAULT "ESP32-WROOM"',
+        'actuators' => 'JSON',
+        'actuator_states' => 'JSON',
+        'thresholds' => 'JSON'
+    ];
+    foreach ($cols as $col => $type) {
         try {
-            $db->exec("ALTER TABLE devices ADD COLUMN $col JSON");
-            echo "Added $col\n";
+            $db->exec("ALTER TABLE devices ADD COLUMN $col $type");
+            echo "Added $col ($type)\n";
         } catch (Exception $e) {
             echo "Failed to add $col: " . $e->getMessage() . "\n";
         }
