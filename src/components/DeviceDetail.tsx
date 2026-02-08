@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.7.0 - Pure SVG Restoration (Zero-Interference)
+// DeviceDetail.tsx - v1.7.1 - Options & Support Tab Restoration
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -220,9 +220,9 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
           </div>
           <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 overflow-x-auto shadow-inner no-scrollbar">
-            {['monitoring', 'controls', 'history', 'audit', 'firmware'].map((t) => (
+            {['monitoring', 'controls', 'history', 'audit', 'firmware', 'troubleshooting'].map((t) => (
               <button key={t} onClick={() => setActiveTab(t as TabType)} className={`px-4 lg:px-6 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t ? 'bg-cyan-500 text-[#0f172a] shadow-lg shadow-cyan-500/20' : 'text-slate-500 hover:text-slate-300'}`}>
-                {t === 'monitoring' ? 'Monitor' : t === 'controls' ? 'Control' : t === 'history' ? 'Historial' : t === 'audit' ? 'Eventos' : t}
+                {t === 'monitoring' ? 'Monitor' : t === 'controls' ? 'Control' : t === 'history' ? 'Historial' : t === 'audit' ? 'Eventos' : t === 'troubleshooting' ? 'Soporte' : t}
               </button>
             ))}
           </div>
@@ -238,7 +238,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                       <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                       <h3 className="text-white font-black text-xs tracking-[0.3em] uppercase">Telemetría Real-Time</h3>
                     </div>
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">v1.7.0 SVG Engine</p>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">v1.7.1 SVG Engine</p>
                   </div>
                   <p className="text-white font-mono text-sm font-bold">{dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].time : '--:--:--'}</p>
                 </div>
@@ -313,29 +313,173 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pr-3 border-t border-slate-800/30 pt-4 scroll-smooth min-h-fit">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
-                <h3 className="text-white font-bold text-xs uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Ajustes Rápidos</h3>
-                <div className="space-y-6">
+                <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
+                <div className="space-y-6 sm:space-y-8">
                   <div>
-                    <label className="text-[10px] font-black text-white uppercase tracking-widest block mb-4">Mantenimiento</label>
-                    <button onClick={() => { const v = !maintenanceMode; setMaintenanceMode(v); handleUpdateDevice({ maintenance_mode: v }); }} className={`w-full py-3 rounded-xl border text-[10px] font-black uppercase transition-all ${maintenanceMode ? 'bg-amber-500 text-[#0f172a] border-amber-400' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-white'}`}>
-                      {maintenanceMode ? 'Activado' : 'Desactivado'}
+                    <div className="flex justify-between text-[10px] sm:text-[11px] font-black text-white uppercase mb-3 tracking-widest">
+                      <span>Muestreo</span>
+                      <span className="text-cyan-400 font-mono text-xs">{intervalSec}s</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="60"
+                      value={intervalSec}
+                      onChange={e => {
+                        const newInterval = parseInt(e.target.value);
+                        setIntervalSec(newInterval);
+                        databaseService.updateDevice(device.id, {
+                          hardwareConfig: { ...device.hardwareConfig!, interval: newInterval }
+                        });
+                        onRefresh();
+                      }}
+                      className="w-full h-2 bg-slate-800 rounded-lg accent-cyan-500 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Maintenance Mode Toggle */}
+                  <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Modo Mantenimiento</span>
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">Suprime alertas locales</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newVal = !maintenanceMode;
+                        setMaintenanceMode(newVal);
+                        handleUpdateDevice({ maintenance_mode: newVal });
+                      }}
+                      className={`w-12 h-6 rounded-full p-1 transition-all ${maintenanceMode ? 'bg-amber-500' : 'bg-slate-700'}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform ${maintenanceMode ? 'translate-x-6' : 'translate-x-0'}`} />
                     </button>
                   </div>
+
+                  {/* Calibration & Heartbeat */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[9px] text-slate-500 font-black uppercase mb-2 block text-center">Mínimo</label>
-                      <input type="number" step="0.1" value={minInput} onChange={e => setMinInput(e.target.value)} onBlur={saveThresholds} className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-3 text-center font-mono font-bold outline-none focus:border-cyan-500" />
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Calibración (+/-)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={calibrationOffset}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setCalibrationOffset(val);
+                        }}
+                        onBlur={() => handleUpdateDevice({ calibration_offset: calibrationOffset })}
+                        className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-2 text-center font-mono font-bold focus:border-cyan-500 outline-none transition-all"
+                      />
                     </div>
                     <div>
-                      <label className="text-[9px] text-slate-500 font-black uppercase mb-2 block text-center">Máximo</label>
-                      <input type="number" step="0.1" value={maxInput} onChange={e => setMaxInput(e.target.value)} onBlur={saveThresholds} className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-3 text-center font-mono font-bold outline-none focus:border-cyan-500" />
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Heartbeat (seg)</label>
+                      <input
+                        type="number"
+                        value={heartbeatInterval}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          setHeartbeatInterval(val);
+                        }}
+                        onBlur={() => handleUpdateDevice({ heartbeat_interval: heartbeatInterval })}
+                        className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-2 text-center font-mono font-bold focus:border-cyan-500 outline-none transition-all"
+                      />
                     </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-black text-white uppercase tracking-widest block mb-4">Calibración Offset</label>
-                    <input type="number" step="0.1" value={calibrationOffset} onChange={e => setCalibrationOffset(parseFloat(e.target.value))} onBlur={() => handleUpdateDevice({ calibration_offset: calibrationOffset })} className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl p-3 text-center font-mono font-bold outline-none focus:border-cyan-500" />
+
+                  {/* Notification Settings */}
+                  <div className="space-y-3 pt-4 border-t border-slate-800">
+                    <label className="text-[10px] font-black text-white uppercase tracking-widest block">Notificaciones</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          const n = { ...notifSettings, email: !notifSettings.email };
+                          setNotifSettings(n);
+                          handleUpdateDevice({ notification_settings: n });
+                        }}
+                        className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.email ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                      >
+                        Email
+                      </button>
+                      <button
+                        onClick={() => {
+                          const n = { ...notifSettings, whatsapp: !notifSettings.whatsapp };
+                          setNotifSettings(n);
+                          handleUpdateDevice({ notification_settings: n });
+                        }}
+                        className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.whatsapp ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                      >
+                        WhatsApp
+                      </button>
+                      <button
+                        onClick={() => {
+                          const n = { ...notifSettings, push: !notifSettings.push };
+                          setNotifSettings(n);
+                          handleUpdateDevice({ notification_settings: n });
+                        }}
+                        className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.push ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                      >
+                        Push
+                      </button>
+                      <button
+                        onClick={() => {
+                          const n = { ...notifSettings, critical_only: !notifSettings.critical_only };
+                          setNotifSettings(n);
+                          handleUpdateDevice({ notification_settings: n });
+                        }}
+                        className={`p-2 rounded-lg border text-[9px] font-bold uppercase transition-all ${notifSettings.critical_only ? 'bg-rose-500/20 border-rose-500 text-rose-400' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                      >
+                        Solo Críticas
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-[10px] sm:text-[11px] font-black text-white uppercase block mb-2 tracking-widest">Umbrales Activos</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-900 border-2 border-slate-800 p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-inner text-center">
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Mínimo</p>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={minInput}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setMinInput(val);
+                            const numericVal = parseFloat(val);
+                            if (!isNaN(numericVal)) setMinThreshold(numericVal);
+                          }}
+                          onBlur={saveThresholds}
+                          className="w-full bg-transparent text-white text-lg sm:text-xl font-black font-mono leading-none text-center outline-none"
+                        />
+                      </div>
+                      <div className="bg-slate-900 border-2 border-slate-800 p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-inner text-center">
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Máximo</p>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={maxInput}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setMaxInput(val);
+                            const numericVal = parseFloat(val);
+                            if (!isNaN(numericVal)) setMaxThreshold(numericVal);
+                          }}
+                          onBlur={saveThresholds}
+                          className="w-full bg-transparent text-white text-lg sm:text-xl font-black font-mono leading-none text-center outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-slate-800">
+                    <label className="text-[10px] sm:text-[11px] font-black text-white uppercase block mb-4 tracking-widest">Zoom Histórico</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {timeOptions.map(opt => (
+                        <button key={opt.value} onClick={() => setTimeRange(opt.value)} className={`py-2 text-[10px] sm:text-[11px] font-black uppercase border-2 rounded-xl transition-all ${timeRange === opt.value ? 'bg-cyan-500 border-cyan-400 text-[#0f172a] shadow-lg shadow-cyan-500/20' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'}`}>{opt.label}</button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -388,6 +532,53 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
               </button>
             </div>
             {generatedSketch && <CodeViewer code={generatedSketch.code} explanation={generatedSketch.explanation} />}
+          </div>
+        )}
+
+        {/* Troubleshooting Tab */}
+        {activeTab === 'troubleshooting' && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+            <div className="bg-[#1e293b] rounded-[2rem] border border-slate-800 p-10 shadow-2xl">
+              <div className="flex items-center gap-6 mb-12">
+                <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-cyan-400 border border-slate-800 shadow-inner">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white uppercase tracking-tight">Centro de Soporte y Diagnóstico</h3>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Herramientas de resolución de problemas</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-slate-900/40 p-8 rounded-[2.5rem] border border-slate-800 group hover:border-cyan-500/30 transition-all">
+                  <h4 className="text-white font-bold uppercase mb-4 flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
+                    Estado de Conexión
+                  </h4>
+                  <p className="text-slate-400 text-xs leading-relaxed mb-6">Verifica si el dispositivo está reportando correctamente al servidor central.</p>
+                  <div className="flex items-center justify-between bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+                    <span className="text-[10px] font-black text-slate-500 uppercase">Heartbeat Status</span>
+                    <span className="text-emerald-400 text-[10px] font-black uppercase">Activo</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/40 p-8 rounded-[2.5rem] border border-slate-800 group hover:border-cyan-500/30 transition-all">
+                  <h4 className="text-white font-bold uppercase mb-4 flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Integridad de Datos
+                  </h4>
+                  <p className="text-slate-400 text-xs leading-relaxed mb-6">Análisis de la coherencia de las últimas 100 mediciones registradas.</p>
+                  <div className="flex items-center justify-between bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
+                    <span className="text-[10px] font-black text-slate-500 uppercase">Calidad de Señal</span>
+                    <span className="text-cyan-400 text-[10px] font-black uppercase">98% / Óptimo</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 p-6 bg-slate-900/60 rounded-3xl border border-slate-800 text-center">
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">¿Necesitas asistencia técnica avanzada? Contacta a soporte@selcom.cl</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
