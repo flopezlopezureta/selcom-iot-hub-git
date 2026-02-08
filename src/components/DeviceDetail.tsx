@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.5 - Absolute Tooltip Suppression & Improved Scroll
+// DeviceDetail.tsx - v1.5.6 - Absolute Interaction Fix & Refined Scroll
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -282,28 +282,38 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
   return (
     <>
       <style>{`
-        .recharts-tooltip-wrapper {
+        /* Bloqueo absoluto de cualquier interacción del Tooltip */
+        .recharts-tooltip-wrapper,
+        .recharts-tooltip-wrapper *,
+        .recharts-default-tooltip,
+        .recharts-default-tooltip *,
+        .recharts-cursor {
           pointer-events: none !important;
           user-select: none !important;
-          ${draggingThreshold ? 'display: none !important;' : ''}
+          touch-action: none !important;
         }
-        .recharts-cursor {
-          ${draggingThreshold ? 'display: none !important;' : ''}
+
+        ${draggingThreshold ? `
+        .recharts-tooltip-wrapper, .recharts-cursor {
+          display: none !important;
         }
+        ` : ''}
+
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(15, 23, 42, 0.3);
+          background: rgba(15, 23, 42, 0.4);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(34, 211, 238, 0.5);
+          background: #22d3ee;
           border-radius: 10px;
-          border: 2px solid rgba(30, 41, 59, 0.5);
+          border: 2px solid #0f172a;
+          box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(34, 211, 238, 0.8);
+          background: #67e8f9;
         }
       `}</style>
       <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12 overflow-x-hidden">
@@ -512,7 +522,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
 
 
-            <div className="space-y-6 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar border-t border-slate-800/30 pt-4 scroll-smooth">
+            <div className="space-y-6 max-h-[440px] overflow-y-auto pr-3 custom-scrollbar border-t border-slate-800/30 pt-4 scroll-smooth">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
                 <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
                 <div className="space-y-6 sm:space-y-8">
