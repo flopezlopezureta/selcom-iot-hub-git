@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.0 - Chart Interactivity & Deployment Test
+// DeviceDetail.tsx - v1.5.2 - UI Usability Fixes
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -404,8 +404,10 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                             borderRadius: '1rem',
                             color: '#fff',
                             boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
-                            padding: '12px 16px'
+                            padding: '12px 16px',
+                            pointerEvents: 'none'
                           }}
+                          wrapperStyle={{ pointerEvents: 'none' }}
                           formatter={(value: number) => [`${value.toFixed(2)} ${device.unit}`, 'Valor']}
                           labelFormatter={(label: string, payload: any[]) => {
                             if (payload && payload[0]) {
@@ -483,7 +485,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
 
 
-            <div className="space-y-6">
+            <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
                 <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
                 <div className="space-y-6 sm:space-y-8">
