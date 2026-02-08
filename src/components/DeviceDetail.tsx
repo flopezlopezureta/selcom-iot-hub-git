@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.8 - Spin Buttons & Absolute Tooltip Removal
+// DeviceDetail.tsx - v1.5.9 - Instant Sync & Absolute Tooltip Suppression
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -316,14 +316,17 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
           opacity: 1 !important;
+          appearance: auto !important;
+          -webkit-appearance: inner-spin-button !important;
           display: block !important;
           cursor: pointer;
         }
         input[type="number"] {
-          -moz-appearance: textfield;
+          -moz-appearance: number-input;
+          appearance: number-input;
         }
       `}</style>
-      <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12 overflow-x-hidden">
+      <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20 overflow-visible">
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -530,7 +533,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
 
 
-            <div className="space-y-6 pr-3 border-t border-slate-800/30 pt-4 scroll-smooth">
+            <div className="space-y-6 pr-3 border-t border-slate-800/30 pt-4 scroll-smooth min-h-fit">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
                 <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
                 <div className="space-y-6 sm:space-y-8">
@@ -661,7 +664,12 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           type="number"
                           step="0.1"
                           value={minInput}
-                          onChange={e => setMinInput(e.target.value)}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setMinInput(val);
+                            const numericVal = parseFloat(val);
+                            if (!isNaN(numericVal)) setMinThreshold(numericVal);
+                          }}
                           onBlur={saveThresholds}
                           className="w-full bg-transparent text-white text-lg sm:text-xl font-black font-mono leading-none text-center outline-none"
                         />
@@ -672,7 +680,12 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           type="number"
                           step="0.1"
                           value={maxInput}
-                          onChange={e => setMaxInput(e.target.value)}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setMaxInput(val);
+                            const numericVal = parseFloat(val);
+                            if (!isNaN(numericVal)) setMaxThreshold(numericVal);
+                          }}
                           onBlur={saveThresholds}
                           className="w-full bg-transparent text-white text-lg sm:text-xl font-black font-mono leading-none text-center outline-none"
                         />

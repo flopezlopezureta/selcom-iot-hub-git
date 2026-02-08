@@ -208,7 +208,7 @@ const App: React.FC = () => {
               <div className="flex flex-col">
                 <div className="flex items-center gap-3 mb-1">
                   <h2 className="text-white text-3xl font-black uppercase tracking-tighter brand-logo">Cloud HUB</h2>
-                  <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-500 text-[8px] font-black uppercase tracking-widest rounded-full border border-cyan-500/20">Active v1.5.8</span>
+                  <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-500 text-[8px] font-black uppercase tracking-widest rounded-full border border-cyan-500/20">Active v1.5.9</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">{currentUser.full_name}</p>
