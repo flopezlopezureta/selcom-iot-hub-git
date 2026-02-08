@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.6.1 - Proximity Tooltip Kill & Strict Alarm Sync
+// DeviceDetail.tsx - v1.6.2 - Absolute Alarm Sync & Tooltip Removal
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -149,7 +149,20 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
     return () => clearInterval(interval);
   }, [device.id]);
 
-  // Load Audit Logs
+  // Sync threshold states with incoming prop updates to ensure instant consistency
+  useEffect(() => {
+    if (device.thresholds) {
+      const min = Number(device.thresholds.min);
+      const max = Number(device.thresholds.max);
+      setMinThreshold(min);
+      setMaxThreshold(max);
+      setMinInput(String(min));
+      setMaxInput(String(max));
+    }
+    setCalibrationOffset(Number(device.calibration_offset) || 0);
+    setMaintenanceMode(Boolean(device.maintenance_mode));
+  }, [device.thresholds?.min, device.thresholds?.max, device.calibration_offset, device.maintenance_mode]);
+
   useEffect(() => {
     if (activeTab === 'audit') {
       setLoadingLogs(true);
@@ -269,9 +282,14 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
   }, [dataPoints, minThreshold, maxThreshold]);
 
   const isOutOfRange = !maintenanceMode && (
-    Number(displayedValue) < Number(minThreshold) ||
-    Number(displayedValue) > Number(maxThreshold)
+    (Number(displayedValue) < Number(minThreshold)) ||
+    (Number(displayedValue) > Number(maxThreshold))
   );
+
+  // Debug logs for user
+  useEffect(() => {
+    console.log(`[DEBUG v1.6.2] Device: ${device.name} | Value: ${displayedValue} | Min: ${minThreshold} | Max: ${maxThreshold} | Alarm: ${isOutOfRange ? 'ACTIVE' : 'OK'}`);
+  }, [displayedValue, minThreshold, maxThreshold, isOutOfRange]);
 
   // Persistence helpers
   const saveThresholds = () => {
@@ -458,31 +476,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           axisLine={{ stroke: '#334155' }}
                           width={40}
                         />
-                        {!draggingThreshold && !isHoveringLine && (
-                          <Tooltip
-                            isAnimationActive={false}
-                            contentStyle={{
-                              backgroundColor: '#0f172a',
-                              borderColor: isOutOfRange ? '#f43f5e' : '#22d3ee',
-                              borderRadius: '1rem',
-                              color: '#fff',
-                              boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
-                              padding: '12px 16px',
-                              pointerEvents: 'none'
-                            }}
-                            wrapperStyle={{ pointerEvents: 'none' }}
-                            formatter={(value: number) => [`${value.toFixed(2)} ${device.unit}`, 'Valor']}
-                            labelFormatter={(label: string, payload: any[]) => {
-                              if (payload && payload[0]) {
-                                return `${payload[0].payload.date} ${label}`;
-                              }
-                              return label;
-                            }}
-                            labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}
-                            itemStyle={{ color: isOutOfRange ? '#f43f5e' : '#22d3ee', fontWeight: 'bold', fontSize: '14px' }}
-                            cursor={{ stroke: isOutOfRange ? '#f43f5e' : '#22d3ee', strokeWidth: 1, strokeDasharray: '4 4' }}
-                          />
-                        )}
+                        {/* Tooltip y Cursor ELIMINADOS por completo para evitar bloqueos */}
                         {/* Threshold Reference Lines */}
                         {/* Hidden Wide Hit Areas for easiest dragging */}
                         <ReferenceLine
