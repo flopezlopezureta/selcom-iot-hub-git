@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.6 - Absolute Interaction Fix & Refined Scroll
+// DeviceDetail.tsx - v1.5.7 - Interaction Stability & Flexible Layout
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -434,6 +434,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                         />
                         <Tooltip
                           active={draggingThreshold ? false : undefined}
+                          content={draggingThreshold ? () => null : undefined}
                           isAnimationActive={false}
                           contentStyle={{
                             backgroundColor: '#0f172a',
@@ -522,7 +523,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
 
 
-            <div className="space-y-6 max-h-[440px] overflow-y-auto pr-3 custom-scrollbar border-t border-slate-800/30 pt-4 scroll-smooth">
+            <div className="space-y-6 pr-3 border-t border-slate-800/30 pt-4 scroll-smooth">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
                 <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
                 <div className="space-y-6 sm:space-y-8">
