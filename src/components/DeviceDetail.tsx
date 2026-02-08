@@ -21,8 +21,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
   const [activeTab, setActiveTab] = useState<TabType>('monitoring');
   const [dataPoints, setDataPoints] = useState<{ value: number; time: string; date: string; timestamp: number }[]>([]);
 
-  const [minThreshold, setMinThreshold] = useState<number>(device.thresholds?.min ?? 20);
-  const [maxThreshold, setMaxThreshold] = useState<number>(device.thresholds?.max ?? 80);
+  const [minThreshold, setMinThreshold] = useState<number>(Number(device.thresholds?.min) || 1.0);
+  const [maxThreshold, setMaxThreshold] = useState<number>(Number(device.thresholds?.max) || 9.0);
 
   // Local string states for smooth input typing (allows decimal points)
   const [minInput, setMinInput] = useState(String(device.thresholds?.min ?? 20));
@@ -152,12 +152,12 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
   // Sync threshold states with incoming prop updates to ensure instant consistency
   useEffect(() => {
     if (device.thresholds) {
-      const min = Number(device.thresholds.min);
-      const max = Number(device.thresholds.max);
+      const min = Number(device.thresholds.min) || 1.0;
+      const max = Number(device.thresholds.max) || 9.0;
       setMinThreshold(min);
       setMaxThreshold(max);
-      setMinInput(String(min));
-      setMaxInput(String(max));
+      setMinInput(String(min.toFixed(1)));
+      setMaxInput(String(max.toFixed(1)));
     }
     setCalibrationOffset(Number(device.calibration_offset) || 0);
     setMaintenanceMode(Boolean(device.maintenance_mode));
