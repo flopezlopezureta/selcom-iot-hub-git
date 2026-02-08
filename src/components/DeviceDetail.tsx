@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.7 - Interaction Stability & Flexible Layout
+// DeviceDetail.tsx - v1.5.8 - Spin Buttons & Absolute Tooltip Removal
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -312,8 +312,15 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
           border: 2px solid #0f172a;
           box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #67e8f9;
+        /* Forzar visibilidad de flechas (spin buttons) en inputs numéricos */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          opacity: 1 !important;
+          display: block !important;
+          cursor: pointer;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield;
         }
       `}</style>
       <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12 overflow-x-hidden">
@@ -432,31 +439,31 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           axisLine={{ stroke: '#334155' }}
                           width={40}
                         />
-                        <Tooltip
-                          active={draggingThreshold ? false : undefined}
-                          content={draggingThreshold ? () => null : undefined}
-                          isAnimationActive={false}
-                          contentStyle={{
-                            backgroundColor: '#0f172a',
-                            borderColor: isOutOfRange ? '#f43f5e' : '#22d3ee',
-                            borderRadius: '1rem',
-                            color: '#fff',
-                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
-                            padding: '12px 16px',
-                            pointerEvents: 'none'
-                          }}
-                          wrapperStyle={{ pointerEvents: 'none' }}
-                          formatter={(value: number) => [`${value.toFixed(2)} ${device.unit}`, 'Valor']}
-                          labelFormatter={(label: string, payload: any[]) => {
-                            if (payload && payload[0]) {
-                              return `${payload[0].payload.date} ${label}`;
-                            }
-                            return label;
-                          }}
-                          labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}
-                          itemStyle={{ color: isOutOfRange ? '#f43f5e' : '#22d3ee', fontWeight: 'bold', fontSize: '14px' }}
-                          cursor={draggingThreshold ? false : { stroke: isOutOfRange ? '#f43f5e' : '#22d3ee', strokeWidth: 1, strokeDasharray: '4 4' }}
-                        />
+                        {!draggingThreshold && (
+                          <Tooltip
+                            isAnimationActive={false}
+                            contentStyle={{
+                              backgroundColor: '#0f172a',
+                              borderColor: isOutOfRange ? '#f43f5e' : '#22d3ee',
+                              borderRadius: '1rem',
+                              color: '#fff',
+                              boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)',
+                              padding: '12px 16px',
+                              pointerEvents: 'none'
+                            }}
+                            wrapperStyle={{ pointerEvents: 'none' }}
+                            formatter={(value: number) => [`${value.toFixed(2)} ${device.unit}`, 'Valor']}
+                            labelFormatter={(label: string, payload: any[]) => {
+                              if (payload && payload[0]) {
+                                return `${payload[0].payload.date} ${label}`;
+                              }
+                              return label;
+                            }}
+                            labelStyle={{ color: '#94a3b8', fontSize: '10px', fontWeight: 'bold', marginBottom: '4px' }}
+                            itemStyle={{ color: isOutOfRange ? '#f43f5e' : '#22d3ee', fontWeight: 'bold', fontSize: '14px' }}
+                            cursor={{ stroke: isOutOfRange ? '#f43f5e' : '#22d3ee', strokeWidth: 1, strokeDasharray: '4 4' }}
+                          />
+                        )}
                         {/* Threshold Reference Lines */}
                         {/* Hidden Wide Hit Areas for easiest dragging */}
                         <ReferenceLine
@@ -651,8 +658,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                       <div className="bg-slate-900 border-2 border-slate-800 p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-inner text-center">
                         <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Mínimo</p>
                         <input
-                          type="text"
-                          inputMode="decimal"
+                          type="number"
+                          step="0.1"
                           value={minInput}
                           onChange={e => setMinInput(e.target.value)}
                           onBlur={saveThresholds}
@@ -662,8 +669,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                       <div className="bg-slate-900 border-2 border-slate-800 p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-inner text-center">
                         <p className="text-[9px] text-slate-400 font-black uppercase mb-1">Máximo</p>
                         <input
-                          type="text"
-                          inputMode="decimal"
+                          type="number"
+                          step="0.1"
                           value={maxInput}
                           onChange={e => setMaxInput(e.target.value)}
                           onBlur={saveThresholds}
