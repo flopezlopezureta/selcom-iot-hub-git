@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.3 - Final UI Polish
+// DeviceDetail.tsx - v1.5.4 - Final UI Usability Overhaul
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -281,7 +281,23 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
 
   return (
     <>
-      <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12">
+      <style>{`
+        .recharts-tooltip-wrapper {
+          pointer-events: none !important;
+          user-select: none !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(15, 23, 42, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(34, 211, 238, 0.3);
+          border-radius: 10px;
+        }
+      `}</style>
+      <div className="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-12 overflow-x-hidden">
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -399,6 +415,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                         />
                         <Tooltip
                           active={draggingThreshold ? false : undefined}
+                          isAnimationActive={false}
                           contentStyle={{
                             backgroundColor: '#0f172a',
                             borderColor: isOutOfRange ? '#f43f5e' : '#22d3ee',
@@ -486,7 +503,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
 
 
-            <div className="space-y-6 max-h-[550px] overflow-y-auto pr-2 custom-scrollbar border-t border-slate-800/30 pt-4">
+            <div className="space-y-6 max-h-[500px] overflow-y-auto pr-3 custom-scrollbar border-t border-slate-800/30 pt-4">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
                 <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
                 <div className="space-y-6 sm:space-y-8">
