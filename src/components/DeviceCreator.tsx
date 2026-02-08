@@ -124,7 +124,7 @@ const DeviceCreator: React.FC<DeviceCreatorProps> = ({ onSuccess, onCancel, comp
 
     const mac = formData.mac_address.trim().toUpperCase();
     if (!mac) {
-      alert("El ID Físico (MAC) es obligatorio para vincular el dispositivo.");
+      alert("El ID del Dispositivo es obligatorio para vincularlo.");
       return;
     }
 
@@ -182,7 +182,7 @@ const DeviceCreator: React.FC<DeviceCreatorProps> = ({ onSuccess, onCancel, comp
               </div>
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-500 mb-2">
-                  ID Físico (MAC / IMEI) <span className="text-rose-500">*</span>
+                  ID Dispositivo <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required

@@ -46,7 +46,7 @@ const DeviceCard = ({ device, onClick }: { device: Device; onClick: (d: Device) 
           <h4 className="text-white font-black text-[11px] uppercase tracking-[0.2em] mb-1 group-hover:text-cyan-400 transition-colors">
             {device.name}
           </h4>
-          <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">{device.mac_address}</p>
+          <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">ID: {device.mac_address}</p>
         </div>
         <div className={`w-2 h-2 rounded-full animate-pulse ${device.status === 'online' ? 'bg-emerald-500' : 'bg-slate-600'}`}></div>
       </div>
@@ -139,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, devices, mode = 'normal', o
                     <tr key={d.id} onClick={() => onSelectDevice(d)} className="hover:bg-cyan-500/5 cursor-pointer transition-colors group">
                       <td className="px-8 py-6">
                         <p className="text-white font-bold uppercase text-xs tracking-tight">{d.name}</p>
-                        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">{d.mac_address}</p>
+                        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">ID: {d.mac_address}</p>
                       </td>
                       <td className="px-8 py-6 text-center">
                         <span className={`text-2xl font-black brand-logo ${isAlarm ? 'text-rose-500' : 'text-cyan-400'}`}>

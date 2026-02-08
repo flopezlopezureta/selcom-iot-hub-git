@@ -214,7 +214,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <p className="text-slate-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] truncate">MAC: {device.mac_address}</p>
+                <p className="text-slate-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] truncate">ID: {device.mac_address}</p>
                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${mode === 'grafana' ? 'bg-orange-500/20 text-orange-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
                   Modo: {mode}
                 </span>
@@ -734,15 +734,15 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Dirección MAC / ID Físico</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">ID Dispositivo</label>
                 <input
                   type="text"
                   value={editForm.mac_address}
                   onChange={(e) => setEditForm({ ...editForm, mac_address: e.target.value.toUpperCase() })}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-5 py-3 text-white text-sm font-mono outline-none focus:ring-1 focus:ring-cyan-500 transition-all"
-                  placeholder="AA:BB:CC:DD:EE:FF"
+                  placeholder="ESP32S3-001001"
                 />
-                <p className="text-[9px] text-slate-600 mt-2 ml-1 uppercase font-bold">Esta MAC debe coincidir con la del ESP32</p>
+                <p className="text-[9px] text-slate-600 mt-2 ml-1 uppercase font-bold">Este ID debe coincidir con el del ESP32</p>
               </div>
 
               <div>
