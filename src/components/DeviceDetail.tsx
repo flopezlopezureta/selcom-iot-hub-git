@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.9 - Instant Sync & Absolute Tooltip Suppression
+// DeviceDetail.tsx - v1.6.0 - Zero-Interference Hover & Instant Line Sync
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -38,6 +38,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
 
   const [intervalSec, setIntervalSec] = useState<number>(device.hardwareConfig?.interval || 10);
   const [timeRange, setTimeRange] = useState<number>(5);
+  const [isHoveringLine, setIsHoveringLine] = useState(false);
   const [draggingThreshold, setDraggingThreshold] = useState<'min' | 'max' | null>(null);
   const chartRef = useRef<any>(null);
 
@@ -442,7 +443,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           axisLine={{ stroke: '#334155' }}
                           width={40}
                         />
-                        {!draggingThreshold && (
+                        {!draggingThreshold && !isHoveringLine && (
                           <Tooltip
                             isAnimationActive={false}
                             contentStyle={{
@@ -472,18 +473,22 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                         <ReferenceLine
                           y={minThreshold}
                           stroke="transparent"
-                          strokeWidth={20}
+                          strokeWidth={25}
                           isFront
                           style={{ cursor: 'ns-resize' }}
                           onMouseDown={() => setDraggingThreshold('min')}
+                          onMouseEnter={() => setIsHoveringLine(true)}
+                          onMouseLeave={() => setIsHoveringLine(false)}
                         />
                         <ReferenceLine
                           y={maxThreshold}
                           stroke="transparent"
-                          strokeWidth={20}
+                          strokeWidth={25}
                           isFront
                           style={{ cursor: 'ns-resize' }}
                           onMouseDown={() => setDraggingThreshold('max')}
+                          onMouseEnter={() => setIsHoveringLine(true)}
+                          onMouseLeave={() => setIsHoveringLine(false)}
                         />
 
                         {/* Visible Lines */}
