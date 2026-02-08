@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.3.0 - Improved Chart Interactivity (Invisible Handles & UI Fixes)
+// DeviceDetail.tsx - v1.5.0 - Chart Interactivity & Deployment Test
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
