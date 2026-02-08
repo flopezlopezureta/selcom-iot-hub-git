@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.6.0 - Zero-Interference Hover & Instant Line Sync
+// DeviceDetail.tsx - v1.6.1 - Proximity Tooltip Kill & Strict Alarm Sync
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -218,20 +218,32 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
   };
 
   const handleMouseMove = (e: any) => {
-    if (!draggingThreshold || !e || !e.chartY || !e.viewBox) return;
+    if (!e || !e.chartY || !e.viewBox) return;
 
+    // Detect proximity to thresholds to kill Tooltip BEFORE dragging
     const { y, height } = e.viewBox;
     const [minD, maxD] = chartDomain;
     const range = maxD - minD;
-
     const ratio = (e.chartY - y) / height;
-    const newValue = maxD - (ratio * range);
-    const roundedValue = Math.round(newValue * 10) / 10;
+    const mouseValue = maxD - (ratio * range);
+
+    // Proximity margin: 10% of chart range
+    const proximity = range * 0.1;
+    const isNear = Math.abs(mouseValue - Number(minThreshold)) < proximity ||
+      Math.abs(mouseValue - Number(maxThreshold)) < proximity;
+
+    if (isHoveringLine !== isNear) {
+      setIsHoveringLine(isNear);
+    }
+
+    if (!draggingThreshold) return;
+
+    const roundedValue = Math.round(mouseValue * 10) / 10;
 
     if (draggingThreshold === 'min') {
-      setMinThreshold(Math.min(roundedValue, maxThreshold - 0.5));
+      setMinThreshold(Math.min(roundedValue, Number(maxThreshold) - 0.5));
     } else {
-      setMaxThreshold(Math.max(roundedValue, minThreshold + 0.5));
+      setMaxThreshold(Math.max(roundedValue, Number(minThreshold) + 0.5));
     }
   };
 
@@ -256,7 +268,10 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
     return [minVal - padding, maxVal + padding];
   }, [dataPoints, minThreshold, maxThreshold]);
 
-  const isOutOfRange = !maintenanceMode && (displayedValue < minThreshold || displayedValue > maxThreshold);
+  const isOutOfRange = !maintenanceMode && (
+    Number(displayedValue) < Number(minThreshold) ||
+    Number(displayedValue) > Number(maxThreshold)
+  );
 
   // Persistence helpers
   const saveThresholds = () => {

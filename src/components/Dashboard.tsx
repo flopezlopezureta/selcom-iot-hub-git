@@ -26,10 +26,12 @@ const DeviceCard = ({ device, onClick }: { device: Device; onClick: (d: Device) 
     return () => clearInterval(interval);
   }, [device.id]);
 
-  const min = device.thresholds?.min ?? 20;
-  const max = device.thresholds?.max ?? 80;
-  const isAlarm = device.value < min || device.value > max;
-  const isWarning = !isAlarm && (device.value < min + 5 || device.value > max - 5);
+  const calibration = Number(device.calibration_offset) || 0;
+  const displayedVal = Number(device.value) + calibration;
+  const min = Number(device.thresholds?.min ?? 10);
+  const max = Number(device.thresholds?.max ?? 90);
+  const isAlarm = !device.maintenance_mode && (displayedVal < min || displayedVal > max);
+  const isWarning = !isAlarm && !device.maintenance_mode && (displayedVal < min + (max - min) * 0.05 || displayedVal > max - (max - min) * 0.05);
 
   const statusColor = isAlarm ? 'rose' : isWarning ? 'amber' : 'cyan';
 
@@ -53,7 +55,7 @@ const DeviceCard = ({ device, onClick }: { device: Device; onClick: (d: Device) 
 
       <div className="flex items-baseline gap-2 mb-4">
         <span className={`text-4xl font-black brand-logo tabular-nums transition-all ${statusColor === 'rose' ? 'text-rose-400' : statusColor === 'amber' ? 'text-amber-400' : 'text-cyan-400'}`}>
-          {device.value.toFixed(1)}
+          {displayedVal.toFixed(1)}
         </span>
         <span className="text-slate-500 text-[10px] font-black uppercase opacity-60 tracking-widest">{device.unit}</span>
       </div>
@@ -134,7 +136,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, devices, mode = 'normal', o
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {devices.map(d => {
-                  const isAlarm = d.value < (d.thresholds?.min ?? 20) || d.value > (d.thresholds?.max ?? 80);
+                  const calibration = Number(d.calibration_offset) || 0;
+                  const val = Number(d.value) + calibration;
+                  const min = Number(d.thresholds?.min ?? 10);
+                  const max = Number(d.thresholds?.max ?? 90);
+                  const isAlarm = !d.maintenance_mode && (val < min || val > max);
                   return (
                     <tr key={d.id} onClick={() => onSelectDevice(d)} className="hover:bg-cyan-500/5 cursor-pointer transition-colors group">
                       <td className="px-8 py-6">
@@ -143,7 +149,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, devices, mode = 'normal', o
                       </td>
                       <td className="px-8 py-6 text-center">
                         <span className={`text-2xl font-black brand-logo ${isAlarm ? 'text-rose-500' : 'text-cyan-400'}`}>
-                          {d.value.toFixed(2)}
+                          {val.toFixed(2)}
                         </span>
                       </td>
                       <td className="px-8 py-6 text-center text-slate-500 text-[10px] font-bold uppercase">{d.unit}</td>
