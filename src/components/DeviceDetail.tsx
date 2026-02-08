@@ -177,26 +177,38 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
     });
   }, [device.value]);
 
-  const handleMouseDown = (type: 'min' | 'max') => {
-    setDraggingThreshold(type);
+  const handleMouseDown = (e: any) => {
+    if (!e || !e.chartY) return;
+
+    // Get relative Y position in the chart
+    const viewBox = e.viewBox;
+    if (!viewBox) return;
+
+    // Calculate value from chartY (inverse of scale)
+    const values = dataPoints.map(p => p.value);
+    const minD = Math.min(...values, minThreshold, maxThreshold) * 0.8;
+    const maxD = Math.max(...values, minThreshold, maxThreshold) * 1.2;
+    const range = maxD - minD;
+
+    const relativeY = (viewBox.y + viewBox.height - e.chartY) / viewBox.height;
+    const clickValue = minD + (relativeY * range);
+
+    // Check if click is near a threshold (within 5% of range)
+    const thresholdMargin = range * 0.05;
+
+    if (Math.abs(clickValue - maxThreshold) < thresholdMargin) {
+      setDraggingThreshold('max');
+    } else if (Math.abs(clickValue - minThreshold) < thresholdMargin) {
+      setDraggingThreshold('min');
+    }
   };
 
   const handleMouseMove = (e: any) => {
     if (!draggingThreshold || !e || !e.chartY) return;
 
-    // Calculate value from chartY
     const viewBox = e.viewBox;
     if (!viewBox) return;
 
-    // Get domain from chart internal state if possible, or use a reasonable approximation
-    // For now, let's use the chart's coordinate system if accessible
-    // A better way is to use the coordinate provided by Recharts for the Y axis
-    if (e.activeCoordinate && e.activeCoordinate.y) {
-      // This is often for the data points. 
-    }
-
-    // fallback: simple linear interpolation based on height
-    // We need to know the domain. Let's calculate it from dataPoints.
     const values = dataPoints.map(p => p.value);
     const minD = Math.min(...values, minThreshold, maxThreshold) * 0.8;
     const maxD = Math.max(...values, minThreshold, maxThreshold) * 1.2;
@@ -321,9 +333,11 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                       <AreaChart
                         data={dataPoints}
                         margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+                        onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
+                        style={{ cursor: draggingThreshold ? 'ns-resize' : 'default' }}
                       >
                         <defs>
                           <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
@@ -370,34 +384,28 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           y={minThreshold}
                           stroke="#f43f5e"
                           strokeDasharray="5 5"
-                          strokeWidth={2}
+                          strokeWidth={draggingThreshold === 'min' ? 4 : 2}
                           isFront
-                          className="cursor-ns-resize"
-                          onMouseDown={() => handleMouseDown('min')}
                           label={{
                             value: `Min: ${minThreshold}`,
                             fill: '#f43f5e',
                             fontSize: 10,
                             fontWeight: 'bold',
-                            position: 'left',
-                            className: 'cursor-ns-resize'
+                            position: 'left'
                           }}
                         />
                         <ReferenceLine
                           y={maxThreshold}
                           stroke="#f43f5e"
                           strokeDasharray="5 5"
-                          strokeWidth={2}
+                          strokeWidth={draggingThreshold === 'max' ? 4 : 2}
                           isFront
-                          className="cursor-ns-resize"
-                          onMouseDown={() => handleMouseDown('max')}
                           label={{
                             value: `Max: ${maxThreshold}`,
                             fill: '#f43f5e',
                             fontSize: 10,
                             fontWeight: 'bold',
-                            position: 'left',
-                            className: 'cursor-ns-resize'
+                            position: 'left'
                           }}
                         />
                         <Area
