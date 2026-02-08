@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.5.2 - UI Usability Fixes
+// DeviceDetail.tsx - v1.5.3 - Final UI Polish
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -398,6 +398,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           width={40}
                         />
                         <Tooltip
+                          active={draggingThreshold ? false : undefined}
                           contentStyle={{
                             backgroundColor: '#0f172a',
                             borderColor: isOutOfRange ? '#f43f5e' : '#22d3ee',
@@ -485,7 +486,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
             </div>
 
 
-            <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-6 max-h-[550px] overflow-y-auto pr-2 custom-scrollbar border-t border-slate-800/30 pt-4">
               <div className="bg-[#1e293b] rounded-[1.5rem] sm:rounded-[2rem] border border-slate-800/40 p-6 sm:p-8 shadow-2xl">
                 <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-6 border-b border-slate-800 pb-4">Panel de Control</h3>
                 <div className="space-y-6 sm:space-y-8">
