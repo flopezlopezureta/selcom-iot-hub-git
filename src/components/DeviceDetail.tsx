@@ -1,4 +1,4 @@
-// DeviceDetail.tsx - v1.6.2 - Absolute Alarm Sync & Tooltip Removal
+// DeviceDetail.tsx - v1.6.3 - Nuclear Sync Protection & Visual Silence
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Device, SensorType, AuditLog, NotificationSettings } from '../types';
 import { generateIoTCode } from '../services/geminiService';
@@ -150,18 +150,29 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
   }, [device.id]);
 
   // Sync threshold states with incoming prop updates to ensure instant consistency
+  // CRITICAL: Only sync if NOT dragging to prevent a reset loop during interaction
   useEffect(() => {
-    if (device.thresholds) {
+    if (device.thresholds && !draggingThreshold) {
       const min = Number(device.thresholds.min) || 1.0;
       const max = Number(device.thresholds.max) || 9.0;
-      setMinThreshold(min);
-      setMaxThreshold(max);
-      setMinInput(String(min.toFixed(1)));
-      setMaxInput(String(max.toFixed(1)));
+      const currentMin = Number(minThreshold);
+      const currentMax = Number(maxThreshold);
+
+      // Only force update if significantly different (prevents loop with simulation)
+      if (Math.abs(min - currentMin) > 0.01) {
+        setMinThreshold(min);
+        setMinInput(String(min.toFixed(1)));
+      }
+      if (Math.abs(max - currentMax) > 0.01) {
+        setMaxThreshold(max);
+        setMaxInput(String(max.toFixed(1)));
+      }
     }
-    setCalibrationOffset(Number(device.calibration_offset) || 0);
-    setMaintenanceMode(Boolean(device.maintenance_mode));
-  }, [device.thresholds?.min, device.thresholds?.max, device.calibration_offset, device.maintenance_mode]);
+    if (!draggingThreshold) {
+      setCalibrationOffset(Number(device.calibration_offset) || 0);
+      setMaintenanceMode(Boolean(device.maintenance_mode));
+    }
+  }, [device.id, device.thresholds?.min, device.thresholds?.max, device.calibration_offset, device.maintenance_mode, draggingThreshold]);
 
   useEffect(() => {
     if (activeTab === 'audit') {
@@ -445,8 +456,8 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                     </div>
                   )}
 
-                  <div className="flex-1 w-full h-[320px] bg-slate-900/40 rounded-2xl border border-slate-700/30 p-4 overflow-hidden">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="flex-1 w-full min-h-[320px] bg-slate-900/40 rounded-2xl border border-slate-700/30 p-4">
+                    <ResponsiveContainer width="100%" height={320}>
                       <AreaChart
                         data={dataPoints}
                         margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
@@ -537,7 +548,7 @@ const DeviceDetail: React.FC<DeviceDetailProps> = ({ device, mode = 'normal', on
                           fill="url(#colorVal)"
                           animationDuration={1500}
                           dot={false}
-                          activeDot={{ r: 6, fill: isOutOfRange ? "#f43f5e" : "#22d3ee", stroke: '#fff', strokeWidth: 2 }}
+                          activeDot={false}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
